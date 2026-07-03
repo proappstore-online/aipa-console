@@ -1,0 +1,15 @@
+{
+  "name": "aipa-console",
+  "private": true,
+  "packageManager": "pnpm@10.30.3",
+  "engines": { "node": ">=22" },
+  "pnpm": { "onlyBuiltDependencies": ["esbuild"] },
+  "scripts": {
+    "dev": "pnpm --filter @aipa-console/web dev",
+    "prebuild": "npx -y @proappstore/cli@latest check",
+    "build": "pnpm --filter @aipa-console/web build",
+    "preview": "pnpm --filter @aipa-console/web preview",
+    "typecheck": "pnpm --filter @aipa-console/web exec tsc -b",
+    "test": "pnpm --filter @aipa-console/web exec tsc -b"
+  }
+}
