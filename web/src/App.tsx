@@ -13,7 +13,7 @@ import {
   type Topic,
 } from './aipa'
 
-const app = initPro({ appId: 'aipa-console' })
+const app = initPro({ appId: 'aipa-console', authMode: 'platform-cookie' })
 
 const TABS = ['Overview', 'Messages', 'Conversations', 'Topics', 'Logs'] as const
 type Tab = (typeof TABS)[number]
