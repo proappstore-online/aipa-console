@@ -7,8 +7,22 @@ on:
     branches: [main]
 
 jobs:
+  # Runner routing (see CLAUDE.md "CI runner rules"). Public repo: the router job
+  # and every job below run on ubuntu-latest; no billing check, no secret read.
+  # Private repo: GitHub-hosted while included minutes remain, self-hosted pags
+  # once they are spent, using the repo-level RUNNER_BILLING_TOKEN (never an org
+  # secret). No job sets its own runner label.
+  router:
+    uses: ProAgentStore/runner-router/.github/workflows/router.yml@v1
+    with:
+      included-minutes: 2000
+      self-hosted-labels: self-hosted,pags
+    secrets:
+      billing-token: ${{ secrets.RUNNER_BILLING_TOKEN }}
+
   compliance:
-    runs-on: ubuntu-latest
+    needs: router
+    runs-on: ${{ fromJSON(needs.router.outputs.runner) }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -21,10 +35,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        # The template repo intentionally contains aipa-console placeholders.
-        # Build the web workspace directly so the normal app compliance
-        # prebuild runs only after pas create has substituted a real app id.
-        run: pnpm --filter @aipa-console/web build
+        # A path filter, not a package name: it matches the web workspace both
+        # here in the template (whose package name is still a placeholder) and in every
+        # app, so this workflow never depends on placeholder substitution
+        # (proappstore-online/platform#205).
+        run: pnpm --filter ./web build
 
       - name: MIT License
         run: grep -qi "MIT" LICENSE
@@ -59,9 +74,6 @@ jobs:
 
       - name: PWA meta tags
         run: grep -qi "apple-mobile-web-app-capable\|mobile-web-app-capable" web/index.html
-
-      - name: ProAppStore link
-        run: grep -r "proappstore.online" web/src/ | grep -q .
 
       - name: Dark mode
         run: grep -rE "prefers-color-scheme|data-theme|color-scheme" web/src/ | grep -q .
